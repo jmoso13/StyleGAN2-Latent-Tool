@@ -32,7 +32,7 @@ setup(
     'latent_utils'
   ],
   install_requires=[
-    'tensorflow==1.15',
+    'tensorflow>=1.15,<2',
     'numpy'
     ],
   extras_require={
