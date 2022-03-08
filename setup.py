@@ -22,7 +22,7 @@ def get_git_version():
   return version
 
 setup(
-  name='stylegan2-latent-tool',
+  name='lttool',
   version=get_git_version(),
   author='Jeff Sontag',
   url='https://github.com/jmoso13/StyleGAN2-Latent-Tool',
