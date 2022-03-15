@@ -1,8 +1,8 @@
-from keras.layers import Lambda, Input, Dense, Dropout, LeakyReLU, BatchNormalization, Layer, Concatenate
-from keras.models import Model
-from keras.losses import mse, binary_crossentropy
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras import backend as K
+from tensorflow.keras.layers import Lambda, Input, Dense, Dropout, LeakyReLU, BatchNormalization, Layer, Concatenate
+from tensorflow.keras.models import Model
+from tensorflow.keras.losses import mse, binary_crossentropy
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras import backend as K
 import tensorflow as tf
 
 import numpy as np
@@ -30,7 +30,22 @@ def dim_decay_func(x, u, l, n):
   return int(np.rint(-np.power(x, n) * (u - l) + u))
 
 
-def get_vae_dict(original_dim, h_l, l, model_name, loss_weights=[0.5, 0.5], n=2.0, dropout_rate=0.0, batch_norm=False, verbose=True):
+def euclid(m):
+  return -(-2 * K.dot(m, K.transpose(m)) + K.sum(K.square(m), axis=1) + K.reshape(K.sum(K.square(m), axis=1),(-1,1)))
+
+
+def remove_self(d):
+  return K.cast(K.greater_equal(d,0), 'float32') * (K.min(d, axis=0) - 1) + d
+
+
+def means(args):
+  inputs = args[0]
+  remove = args[1]
+  idx = K.argmax(remove)
+  return (inputs + K.gather(inputs, idx))/2.0
+
+
+def get_vae_dict(original_dim, h_l, l, model_name, loss_weights=[0.5, 0.5], n=2.0, dropout_rate=0.0, batch_norm=False, verbose=True, nn_vae=False):
   # Input Layer
   input_shape = (original_dim,)
   inputs = Input(shape=input_shape, name='encoder_input')
@@ -53,9 +68,18 @@ def get_vae_dict(original_dim, h_l, l, model_name, loss_weights=[0.5, 0.5], n=2.
   # VAE Layer
   z_mean = Dense(l, name='z_mean')(last_layer)
   z_log_var = Dense(l, name='z_log_var')(last_layer)
-  z = Lambda(sampling, output_shape=(l,), name='z')([z_mean, z_log_var])
+  if nn_vae:
+    dist = Lambda(euclid, output_shape=(l,), name='dist')(z_mean)
+    remove = Lambda(remove_self, output_shape=(l,), name='remove_self')(dist)
+    m = Lambda(means, output_shape=(l,), name='m')([z_mean, remove])
+    z = Lambda(sampling, output_shape=(l,), name='z')([m, z_log_var])
+  else:
+    z = Lambda(sampling, output_shape=(l,), name='z')([z_mean, z_log_var])
   # Instantiate encoder model
-  encoder = Model(inputs, [z_mean, z_log_var, z], name='encoder')
+  if nn_vae:
+    encoder = Model(inputs, [z_mean, m, z_log_var, z], name='encoder')
+  else:
+    encoder = Model(inputs, [z_mean, z_log_var, z], name='encoder')
   # DECODER
   last_layer = z
   for x in reversed(range(h_l)):
@@ -74,7 +98,10 @@ def get_vae_dict(original_dim, h_l, l, model_name, loss_weights=[0.5, 0.5], n=2.
   # Defining Loss
   reconstruction_loss = mse(inputs, outputs)
   reconstruction_loss *= original_dim
-  kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
+  if nn_vae:
+    kl_loss = 1 + z_log_var - K.log(K.mean(K.square(K.max(remove, axis=0)))) - K.exp(z_log_var - K.log(K.mean(K.square(K.max(remove, axis=0)))))
+  else:
+    kl_loss = 1 + z_log_var - K.square(z_mean) - K.exp(z_log_var)
   kl_loss = K.sum(kl_loss, axis=-1)
   kl_loss *= -0.5
   vae_loss = K.mean(loss_weights[0]*reconstruction_loss + loss_weights[1]*kl_loss)
