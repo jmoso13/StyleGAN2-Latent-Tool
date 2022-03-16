@@ -1,8 +1,8 @@
-from tensorflow.keras.layers import Lambda, Input, Dense, Dropout, LeakyReLU, BatchNormalization, Layer, Concatenate
-from tensorflow.keras.models import Model
-from tensorflow.keras.losses import mse, binary_crossentropy
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras import backend as K
+from keras.layers import Lambda, Input, Dense, Dropout, LeakyReLU, BatchNormalization, Layer, Concatenate
+from keras.models import Model
+from keras.losses import mse, binary_crossentropy
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras import backend as K
 import tensorflow as tf
 
 import numpy as np
