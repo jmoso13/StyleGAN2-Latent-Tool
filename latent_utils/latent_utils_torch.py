@@ -72,7 +72,7 @@ class VAE(nn.Module):
       x = F.leaky_relu(self.bn7(self.fc7(x)))
       x = F.leaky_relu(self.bn8(self.fc8(x)))
       mu, log_var = self.fc_mu(x), self.fc_var(x)
-      std = torch.exp(log_var / 2)
+      std = torch.exp(0.5 * log_var)
       q = torch.distributions.Normal(mu, std)
       z = q.rsample()
 
