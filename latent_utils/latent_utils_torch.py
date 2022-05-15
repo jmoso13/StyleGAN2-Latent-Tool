@@ -62,8 +62,7 @@ class VAE(nn.Module):
       self.bnr7 = nn.BatchNorm1d(203)
       self.bnr8 = nn.BatchNorm1d(109)
 
-
-    def forward(self, x):
+    def encode(self, x):
       x = F.leaky_relu(self.bn1(self.fc1(x)))
       x = F.leaky_relu(self.bn2(self.fc2(x)))
       x = F.leaky_relu(self.bn3(self.fc3(x)))
@@ -77,6 +76,9 @@ class VAE(nn.Module):
       q = torch.distributions.Normal(mu, std)
       z = q.rsample()
 
+      return [z, mu, log_var]
+
+    def decode(self, z):
       x = F.leaky_relu(self.bnr8(self.fcr8(z)))
       x = F.leaky_relu(self.bnr7(self.fcr7(x)))
       x = F.leaky_relu(self.bnr6(self.fcr6(x)))
@@ -86,6 +88,12 @@ class VAE(nn.Module):
       x = F.leaky_relu(self.bnr2(self.fcr2(x)))
       x = F.leaky_relu(self.bnr1(self.fcr1(x)))
       x = self.fcr_out(x)
+
+      return x
+
+    def forward(self, x):
+      z, mu, log_var = self.encode(x)
+      x = self.decode(z)
 
       return [x, mu, log_var]
   
