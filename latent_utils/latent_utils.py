@@ -136,9 +136,11 @@ def make_decoder_input(shape):
   return Input(shape=(2,))
 
 
-def decode_pic(decoder, x, y, num_w, Gs, Gs_kwargs):
+def decode_pic(decoder, x, y, num_w, Gs, Gs_kwargs, noise=None, noise_weight=1.0):
   zij = decoder.predict(np.array([[x,y]]))
   zij = np.repeat(zij, num_w, axis=0).reshape(1, num_w, -1)
+  if noise:
+    zij += noise*noise_weight
   num = Gs.components.synthesis.run(zij, **Gs_kwargs)[0]
   return num
 
