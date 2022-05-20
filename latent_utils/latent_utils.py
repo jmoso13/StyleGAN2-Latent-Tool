@@ -149,6 +149,6 @@ def check_pic(full, i, j, points, pic_size=512):
   return full[pic_size*len(points)-(i*pic_size+pic_size):pic_size*len(points)-i*pic_size, j*pic_size:j*pic_size+pic_size]
 
 
-def get_model_callbacks(model_name, patience=100):
-  return EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=patience), ModelCheckpoint(f'models/best_{model_name}.h5', monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
+def get_model_callbacks(model_name, patience=100, model_dir_path='models'):
+  return EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=patience), ModelCheckpoint(f'{model_dir_path}/best_{model_name}.h5', monitor='val_loss', verbose=0, save_best_only=True, save_weights_only=True, mode='auto', period=1)
 
