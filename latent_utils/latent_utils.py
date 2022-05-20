@@ -126,7 +126,6 @@ def build_decoder(vae, decoder_input):
     layer_list.append(l)
   decoder_output = decoder_input
   for l in reversed(layer_list):
-    print(l.name)
     decoder_output = l(decoder_output)
   de = Model(decoder_input, decoder_output)
   return de   
